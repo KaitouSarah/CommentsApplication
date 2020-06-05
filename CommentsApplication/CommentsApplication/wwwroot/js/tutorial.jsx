@@ -2,6 +2,7 @@
     constructor(props) {
         super(props);
         this.state = { data: [] };
+        this.handleCommentSubmit = this.handleCommentSubmit.bind(this);
     }
 
     loadCommentsFromServer() {
@@ -12,6 +13,17 @@
             this.setState({ data: data });
         };
         xhr.send();
+    }
+
+    handleCommentSubmit(comment) {
+        const data = new FormData();
+        data.append('Author', comment.author);
+        data.append('Text', comment.text);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('post', this.props.submitUrl, true);
+        xhr.onload = () => this.loadCommentsFromServer();
+        xhr.send(data);
     }
 
     componentDidMount() {
@@ -27,7 +39,7 @@
             <div className="commentBox">
                 <h1>Comments</h1>
                 <CommentList data={this.state.data} />
-                <CommentForm />
+                <CommentForm onCommentSubmit={this.handleCommentSubmit} />
             </div>
         );
     }
@@ -65,7 +77,8 @@ class CommentForm extends React.Component {
         if (!text || !author) {
             return;
         }
-        // TODO: send request to the server
+        
+        this.props.onCommentSubmit({ author: author, text: text });
         this.setState({ author: '', text: '' });
     }
 
@@ -84,7 +97,6 @@ class CommentForm extends React.Component {
                     value={this.state.text}
                     onChange={this.handleTextChange}
                 />
-                <inp
                 <input type="submit" value="Post" />
             </form>
         );
@@ -123,4 +135,9 @@ const data = [
 ];
 
 
-ReactDOM.render(<CommentBox url="/comments" pollInterval={2000} />, document.getElementById('content'));
+ReactDOM.render(
+    <CommentBox
+        url="/comments"
+        submitUrl="/comments/new"
+        pollInterval={2000} />,
+    document.getElementById('content'));
